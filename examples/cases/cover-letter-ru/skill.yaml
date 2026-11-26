@@ -1,0 +1,48 @@
+# Checks shared by every cover-letter-ru case. Each one comes from a rule in the skill.
+# Guessed limits are marked "guess"; change them if the skill says otherwise.
+checks:
+  - {type: language, lang: ru, min_share: 0.9}
+  - {type: max_words, limit: 280}                 # rule 6: hard limit 280 words
+  - {type: min_words, limit: 150}                 # guess: shorter than this is not a letter
+  - {type: paragraphs, min: 4, max: 6}            # rule 6 asks for 5; guess: allow 4-6
+  - id: no_vacancy_opening                        # rule 1: do not open with the job title
+    type: first_line_not
+    patterns: ['откликаюсь', 'ваш[ау]ю? ваканси', 'на позици']
+  - id: no_antithesis                             # rule 9: no "X, а не Y", "вместо", "быстрее, чем"
+    type: forbidden
+    patterns: [',\s*а не\b', '\bвместо\b', '\bбыстрее,? чем\b', '\bне\s+\w+,\s+а\s+\w+']
+  - id: no_gaps                                   # rule 7: never name your own gaps
+    type: forbidden
+    patterns: ['у меня нет опыта', 'не работал', 'стану разбираться', 'пока не\s+\w+ал']
+  - id: no_derzhu                                 # rule 11: "держу" in the sense of "keep an eye on"
+    type: forbidden
+    patterns: ['держу\s+(руку|в поле|фокус)']
+  - id: verb_vnedryayu                            # rule 16: "внедряю", not "вывожу"
+    type: forbidden
+    patterns: ['\bвывож[уе]', '\bвывел']
+  - id: no_numbered_launch                        # rule 16: not "второе внедрение"
+    type: forbidden
+    patterns: ['втор(ое|ым) внедрени']
+  - id: no_future_pitch                           # rule 18: no "мне интересно", "я бы начал"
+    type: forbidden
+    patterns: ['мне интересн', 'я бы нач', 'предлагаю внедрить']
+  - id: no_ruble_sign
+    type: forbidden
+    patterns: ['₽']
+  - id: closing_line                              # rule 18: fixed closing sentence
+    type: required
+    patterns: ['Готов обсудить ваши задачи и рассказать, чем может помочь мой опыт']
+  - {type: no_placeholders}
+  - {type: paragraph_starts_differ}               # rule 17: neighbouring paragraphs do not both open with "Я"
+
+rubric:
+  - id: strong_opening
+    text: The first two lines give the reason to invite the candidate for this vacancy, with a measured result.
+  - id: matches_vacancy
+    text: The cases chosen answer the main requirements of the vacancy in the task.
+  - id: one_mention_per_case
+    text: Each case appears once, with all its facets in one place; no paragraph retells earlier cases.
+  - id: first_person_direct
+    text: Achievements are told in the first person with active verbs and direct word order, no impersonal phrases.
+  - id: no_repeated_roots
+    text: The same word root does not repeat in neighbouring sentences.

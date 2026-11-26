@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skill-evals"
+version = "0.1.0"
+description = "Regression tests for AI skills and prompts: saved example inputs, rule checks, an LLM judge and a quality history"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = ["pyyaml>=6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+skill-evals = "skill_evals.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["skill_evals*"]
+
+[tool.setuptools.package-data]
+skill_evals = ["prompts/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 125

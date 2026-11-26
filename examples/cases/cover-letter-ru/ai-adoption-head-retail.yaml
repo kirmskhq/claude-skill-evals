@@ -1,0 +1,18 @@
+title: Head of AI adoption at a retail chain
+# Synthetic vacancy written for this repo. The company is invented.
+input: |
+  Перепиши письмо под требования этой вакансии, сохрани факты.
+
+  Руководитель отдела внедрения ИИ, розничная сеть «Ромашка-маркет» (вымышленная).
+  Задачи: внедрять ИИ-инструменты в работу магазинов и офиса; обучать сотрудников и работать
+  с сопротивлением изменениям; выстраивать метрики эффекта; готовить презентации для правления.
+  Требования: опыт управления изменениями, опыт обучения больших групп сотрудников, опыт
+  внедрения ИИ в операционные процессы.
+checks:
+  - id: mentions_training                         # case-specific: the vacancy asks for training at scale
+    type: required
+    patterns: ['обуч']
+defects:
+  - file: defects/ai-adoption-head-retail.repeats.md
+    must_fail: [paragraph_starts_differ, verb_vnedryayu, no_derzhu]
+    note: three paragraphs open with "Я", uses "вывожу" and "держу руку на пульсе"

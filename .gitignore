@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+# private checks, answers and history from runs on skills you do not publish
+_private/
+local/
+answers_out/

@@ -1,0 +1,34 @@
+# Checks shared by every vacancy-evaluation-ru case. Guessed limits are marked "guess".
+checks:
+  - {type: language, lang: ru, min_share: 0.85}   # guess: English quotes from vacancies are allowed
+  - {type: max_words, limit: 900}                 # guess: "short, for a phone screen"
+  - id: answer_format                             # "Формат ответа": blocks in this order
+    type: sections_in_order
+    sections: ['Вердикт', 'Что за роль', 'Сильные стороны', 'Закрываемые гэпы', 'Зарплата', 'Следующий шаг']
+  - id: verdict_level                             # block 1: one of four named levels
+    type: required
+    patterns: ['(сильное|рабочее|стретч|не подходит)']
+  - id: no_ask_recruiter                          # step 4: never advise asking for the salary range first
+    type: forbidden
+    patterns: ['напи(шите|сать) рекрутеру', 'уточни(те)? вилку', 'выясни(те)? вилку']
+  - id: no_letter_started                         # the letter is written only on a direct request
+    type: forbidden
+    patterns: ['Готов обсудить ваши задачи']
+  - id: no_ruble_sign
+    type: forbidden
+    patterns: ['₽']
+  - id: no_percent_in_profile                     # "процентов в нём нет": no made-up match percentages
+    type: forbidden
+    patterns: ['соответстви\w*\s+(на\s+)?\d+\s*%', '\d+\s*%\s+соответстви']
+  - {type: amounts_labeled}
+  - {type: no_placeholders}
+
+rubric:
+  - id: quotes_back_conclusions
+    text: Each conclusion about the role is backed by a short quote from the vacancy text.
+  - id: critical_gaps_from_must_haves
+    text: Every critical gap is tied to a mandatory requirement of the vacancy, not to a nice-to-have or to years of experience.
+  - id: clear_recommendation
+    text: The verdict says plainly whether to apply and why, in two or three sentences.
+  - id: few_questions
+    text: There are at most three questions to the candidate and at most three to the hiring manager, each about a real unknown.

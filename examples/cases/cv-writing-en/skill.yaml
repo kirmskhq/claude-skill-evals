@@ -1,0 +1,37 @@
+# Checks shared by every cv-writing-en case. Guessed limits are marked "guess".
+checks:
+  - {type: language, lang: en, min_share: 0.98}
+  - {type: max_sentence_words, limit: 30}         # section 4: "under about 25 words"; guess: hard fail above 30
+  - id: no_location                               # section 5: no city, country or relocation line
+    type: forbidden
+    patterns: ['\brelocat', '\bbased in\b', '\bMoscow\b', '\bRussia\b']
+  - id: no_star_labels                            # section 3: never label Situation / Task / Action / Result
+    type: forbidden
+    patterns: ['\b(Situation|Task|Action|Result)\s*:']
+  - id: no_self_limiting                          # section 5
+    type: forbidden
+    patterns: ['not a programmer', 'not an engineer', 'organi[sz]er, not']
+  - id: british_spelling                          # section 7: one spelling variety, British
+    type: forbidden
+    ignore_case: false
+    patterns: ['\b(organiz|optimiz|prioritiz|analyz|recogniz|minimiz|maximiz|standardiz|customiz|utiliz|anonymiz)\w*']
+  - id: no_currency_sign
+    type: forbidden
+    patterns: ['₽']
+  - id: no_dash_chain                             # section 7: no em-dash chains
+    type: forbidden
+    patterns: ['—[^—\n]{0,80}—']
+  - id: coverage_note                             # section 1: a short coverage note outside the CV
+    type: required
+    patterns: ['coverage']
+  - {type: no_placeholders}
+
+rubric:
+  - id: answers_objectives
+    text: The summary and the order of selected work answer the role's first-year objectives.
+  - id: star_without_labels
+    text: Each case reads as a short story with a baseline number, the candidate's own action and a measured result.
+  - id: clear_to_stranger
+    text: Every entity is introduced before it is referred to; there is no internal jargon a stranger cannot decode.
+  - id: idiomatic
+    text: The English is idiomatic, with no calques and no repeated words in neighbouring sentences.

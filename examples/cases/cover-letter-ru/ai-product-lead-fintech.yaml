@@ -1,0 +1,18 @@
+title: AI product lead at a fintech company
+# Synthetic vacancy written for this repo. The company is invented.
+input: |
+  Напиши сопроводительное письмо под эту вакансию.
+
+  Руководитель ИИ-продуктов, финтех-компания «Северный кредит» (вымышленная).
+  Задачи: запускать ИИ-решения в кредитном процессе и доводить их до промышленной эксплуатации;
+  считать экономику решений и защищать её перед руководством; работать с командой разработки
+  и данными; учитывать требования информационной безопасности и защиты персональных данных.
+  Требования: опыт запуска LLM-продуктов в проде с измеримым эффектом, понимание оценки качества
+  моделей, опыт управления кросс-функциональной командой.
+defects:
+  - file: defects/ai-product-lead-fintech.antithesis.md
+    must_fail: [no_antithesis, no_vacancy_opening]
+    note: opens with the job title and uses "а не" twice
+  - file: defects/ai-product-lead-fintech.too-long.md
+    must_fail: [max_words, no_gaps, closing_line]
+    note: long letter that explains a gap and has no closing line

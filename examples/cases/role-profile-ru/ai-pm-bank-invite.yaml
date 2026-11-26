@@ -1,0 +1,12 @@
+title: Interview invite for an AI PM role at a bank
+# Synthetic vacancy written for this repo. The bank and the people are invented.
+input: |
+  Пришло приглашение на собеседование, сделай профиль роли.
+
+  Вакансия: AI Product Manager, банк «Заречный» (вымышленный). Команда ассистента для клиентов
+  в мобильном приложении. Задачи: «находить сценарии, где ассистент снимает нагрузку с поддержки»,
+  «запускать и измерять», «работать с командой из 6 инженеров». Собеседование с руководителем
+  направления цифровых каналов. Формат: 60 минут, видео.
+defects:
+  - file: defects/ai-pm-bank-invite.arrows.md
+    must_fail: [dossier_sections, no_arrows, no_percent_on_axes]

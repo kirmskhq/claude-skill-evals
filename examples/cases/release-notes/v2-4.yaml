@@ -1,0 +1,12 @@
+title: A normal release with a fix and an internal change
+input: |
+  Write release notes for these merged PRs:
+  - feat: export reports to CSV (#412)
+  - fix: date picker showed wrong month in Safari (#415)
+  - chore: bump eslint to v9 (#416)
+  - perf: dashboard loads 2x faster by caching widgets (#418)
+  - refactor: split api client into modules (#419)
+defects:
+  - file: defects/v2-4.leaks.md
+    must_fail: [no_internal_refs, no_internal_changes, group_order]
+    note: keeps PR numbers, lists the eslint bump, puts Fixed before New

@@ -1,0 +1,11 @@
+title: Tailor the summary and one case for a GovTech AI PM role
+# Synthetic job description written for this repo. The organisation is invented.
+input: |
+  Tailor my CV summary and the first selected-work case for this role.
+
+  AI Product Manager, Civic Agents Lab (fictional). Objectives: redesign public-service workflows
+  with AI agents and prove value against a baseline. Must-haves: shipped LLM products, evaluation
+  with golden sets, hands-on prototyping. Nice to have: regulated industries.
+defects:
+  - file: defects/ai-pm-govtech.labels.md
+    must_fail: [no_star_labels, british_spelling, no_location, coverage_note]

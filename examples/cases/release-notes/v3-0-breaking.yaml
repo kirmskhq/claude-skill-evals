@@ -1,0 +1,10 @@
+title: A breaking change that needs user action
+input: |
+  Release notes please. Changes since 2.9:
+  - BREAKING: API keys created before 2024 stop working; users must create a new key in Settings (PLAT-881)
+  - feat: dark mode
+  - ci: run tests on node 22
+checks:
+  - id: action_needed                             # rule 7
+    type: required
+    patterns: ['### Action needed']

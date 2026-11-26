@@ -1,0 +1,24 @@
+# A small public skill that ships with the repo, so anyone can run a live eval end to end.
+skill_file: ../../skills/release-notes/SKILL.md
+checks:
+  - id: starts_with_heading                       # rule 1
+    type: required
+    patterns: ['\A## What''s new']
+  - id: group_order                               # rule 2
+    type: sections_in_order
+    sections: ['### New', '### Improved', '### Fixed', '### Action needed']
+    all_required: false                           # "leave out an empty group"
+  - id: no_internal_refs                          # rule 4: no tickets, hashes, branches, paths
+    type: forbidden
+    patterns: ['#\d+', '\b[0-9a-f]{7,40}\b', '\b[A-Z]{2,}-\d+\b', '\w+/\w+\.\w{2,4}\b']
+  - id: no_internal_changes                       # rule 5
+    type: forbidden
+    patterns: ['refactor', '\bCI\b', 'bump', 'dependenc', 'unit test']
+  - {type: max_words, limit: 150}                 # rule 6
+  - {type: language, lang: en, min_share: 0.98}
+  - {type: no_placeholders}
+rubric:
+  - id: user_effect
+    text: Each bullet says what changed for the user, in words a non-developer understands.
+  - id: complete
+    text: Every user-facing change from the input is covered, and nothing is invented.
