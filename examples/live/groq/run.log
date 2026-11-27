@@ -1,0 +1,18 @@
+$ skill-evals run --skill release-notes --mode api --judge --label "v1 first draft"
+release-notes: 14/15 checks, judge 4.00
+  FAIL v3-0-breaking/no_internal_changes: found: CI
+model calls 4, tokens 2876
+$ skill-evals run --skill release-notes --mode api --judge --label "v2 rules for the reader"
+release-notes: 15/15 checks, judge 5.00
+model calls 4, tokens 2624
+$ skill-evals run --skill release-notes --mode api --judge --label "v3 tidy-up"
+release-notes: 14/15 checks, judge 5.00
+  FAIL v3-0-breaking/action_needed: missing: ### Action needed
+  REGRESSED: v3-0-breaking/action_needed
+model calls 4, tokens 2591
+$ skill-evals compare release-notes v2/SKILL.md v3/SKILL.md --mode api --judge
+release-notes: WORSE
+  checks  before 15/15  after 14/15
+  judge   before 5.00  after 5.00
+  BROKEN  v3-0-breaking/action_needed
+model calls 8, tokens 5096

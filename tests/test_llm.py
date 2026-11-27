@@ -73,3 +73,11 @@ def test_rate_limit_waits_as_long_as_retry_after_says(monkeypatch):
     llm = LLM("k", "openai", "http://x/v1", post=post)
     assert llm.chat([{"role": "user", "content": "U"}], model="m", budget=Budget(), task="t") == "done"
     assert slept == [14.0]
+
+
+def test_requests_carry_an_honest_user_agent():
+    # Groq's edge refuses urllib's default "Python-urllib" agent with HTTP 403 (error 1010)
+    for provider in ("anthropic", "openai"):
+        post = FakePost("x", provider=provider)
+        LLM("k", provider, post=post).chat([{"role": "user", "content": "U"}], model="m", budget=Budget(), task="t")
+        assert post.requests[0]["headers"]["User-Agent"].startswith("skill-evals/")

@@ -13,14 +13,18 @@ few saved example requests, checks each answer against your rules, and keeps a h
 on the day you make it, before a real user sees a bad answer.
 
 ```console
-$ skill-evals compare release-notes v2/SKILL.md v3/SKILL.md
+$ skill-evals compare release-notes v2/SKILL.md v3/SKILL.md --mode api --judge
 release-notes: WORSE
   checks  before 15/15  after 14/15
+  judge   before 5.00  after 5.00
   BROKEN  v3-0-breaking/action_needed
+model calls 8, tokens 5096
 ```
 
-*The v3 edit looked like a harmless tidy-up. It removed the rule that tells users what to do after a breaking
-change. [Try this demo yourself](examples/demo/release-notes/), no API key needed.*
+*A real run on Groq (Qwen 3.8 27B runs the skill, GPT-OSS 120B judges it). The v3 edit looked like a harmless
+tidy-up. It removed the rule that tells users what to do after a breaking change. The judge gave both versions a
+perfect score; the rule check caught it. [Live run](examples/live/groq/) ·
+[offline demo](examples/demo/release-notes/), no API key needed.*
 
 ## Why
 
@@ -148,14 +152,15 @@ flowchart LR
 ## Status and roadmap
 
 Version 0.1. The checks, history, report, `compare` and `init` are covered by tests. Both model adapters are tested
-against a fake network. No live run is published yet, and the answers in the examples are hand-written illustrations.
+against a fake network. One live run is published: [release-notes on Groq](examples/live/groq/) (the answers,
+the log and the trend report). The answers in `examples/cases` and `examples/demo` are hand-written illustrations.
 
 Next:
 
 - [ ] Several samples per case, with the spread in the report, to catch skills that only work some of the time.
 - [ ] A pairwise judge for `compare` ("which answer follows the skill better?"), which is steadier than two separate scores.
 - [ ] A GitHub Action that comments the `compare` result on any pull request that changes a `SKILL.md`.
-- [ ] Published live runs on Claude and on an open model.
+- [ ] Published live runs on Claude (done for open models on Groq).
 
 ## Contributing
 

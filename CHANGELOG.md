@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+Fixes found by the first live runs (NeuralDeep and Groq free tiers):
+
+- Requests send a `skill-evals/<version>` User-Agent; Groq refused urllib's default one with HTTP 403.
+- Retries wait as long as the server's `Retry-After` says (free tiers send it on 429), up to 90 seconds.
+- The judge is asked once more when its reply is not valid JSON; the judge prompt is now version 2.
+- A rubric item the judge scores twice counts once, with the lower score.
+- The `release-notes` rubric says internal changes are meant to be left out, after the judge marked answers down for that.
+- First published live run: `examples/live/groq`.
+
 ## 0.1.0 (2026-11-27)
 
 First public version.

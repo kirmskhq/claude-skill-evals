@@ -21,4 +21,6 @@ rubric:
   - id: user_effect
     text: Each bullet says what changed for the user, in words a non-developer understands.
   - id: complete
-    text: Every user-facing change from the input is covered, and nothing is invented.
+    text: >-
+      Every user-facing change from the input is covered, and nothing is invented. Internal changes
+      (chore, ci, refactor, dependency bumps) are meant to be left out and do not count as missing.

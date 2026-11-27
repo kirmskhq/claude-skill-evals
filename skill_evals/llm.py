@@ -17,6 +17,8 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from . import __version__
+
 
 class BudgetExceeded(Exception):
     """A run hit its cap on model calls or tokens."""
@@ -83,6 +85,8 @@ def _retry_delay(error: Exception, attempt: int) -> float:
         return float(2 ** attempt)
 
 
+USER_AGENT = f"skill-evals/{__version__} (+https://github.com/kirmskhq/claude-skill-evals)"
+
 DEFAULT_URLS = {"anthropic": "https://api.anthropic.com/v1", "openai": "https://api.openai.com/v1"}
 
 
@@ -114,11 +118,13 @@ class LLM:
                        "messages": [m for m in messages if m["role"] != "system"]}
             if system:
                 payload["system"] = system
-            headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+            headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json",
+                       "User-Agent": USER_AGENT}
             return f"{self.base_url}/messages", payload, headers
         payload = {"model": model, "messages": messages, "max_tokens": max_tokens, "temperature": temperature}
         return f"{self.base_url}/chat/completions", payload, {"Authorization": f"Bearer {self.api_key}",
-                                                              "Content-Type": "application/json"}
+                                                              "Content-Type": "application/json",
+                                                              "User-Agent": USER_AGENT}
 
     def _parse(self, data: dict) -> tuple[str, int]:
         usage = data.get("usage") or {}
