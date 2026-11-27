@@ -1,0 +1,31 @@
+# Checks shared by every role-profile-ru case. Guessed limits are marked "guess".
+checks:
+  - {type: language, lang: ru, min_share: 0.85}
+  - id: dossier_sections                          # "Формат досье": the core blocks, in order
+    type: sections_in_order
+    sections: ['Коротко', 'Оси роли', 'Компания', 'Кто нанимает', 'Что спросят', 'Вопросы работодателю']
+  - id: no_arrows                                 # "без стрелок"
+    type: forbidden
+    patterns: ['→', '->', '⇒']
+  - id: no_ruble_sign                             # "валюта — «руб.»"
+    type: forbidden
+    patterns: ['₽']
+  - id: no_percent_on_axes                        # "процентов нет" in the axes conclusions
+    type: forbidden
+    patterns: ['\d+\s*%\s*(discovery|delivery|стратеги)', '(discovery|delivery)\s*[—:-]?\s*\d+\s*%']
+  - id: no_self_limiting                          # "нет ограничительных фраз о разработке и самоумаления"
+    type: forbidden
+    patterns: ['я не программист', 'не разработчик', 'не технический']
+  - {type: amounts_labeled}
+  - {type: no_placeholders}
+  - {type: max_words, limit: 2500}                # guess
+
+rubric:
+  - id: axes_with_quotes
+    text: Every conclusion on the role axes rests on a quote; unclear axes are turned into questions.
+  - id: sourced_company_facts
+    text: Facts about the company and the hiring manager carry a link or say where they came from.
+  - id: first_story_main_axis
+    text: In the conversation plan, the first story covers the main axis of the role and each story bridges to their task.
+  - id: frames_not_experience
+    text: Frameworks that are not in the candidate's experience are offered as ways to think, not as experience.

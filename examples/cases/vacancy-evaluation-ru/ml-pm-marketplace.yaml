@@ -1,0 +1,14 @@
+title: ML product manager at a marketplace
+# Synthetic vacancy written for this repo. The company is invented.
+input: |
+  Оцени вакансию, стоит ли откликаться.
+
+  Product Manager (ML), маркетплейс «Полка» (вымышленный). Зарплата 400 000 рублей до вычета налогов.
+  Задачи: развивать рекомендации и поиск; ставить гипотезы и проводить A/B-тесты; работать с командой
+  ML-инженеров; «You will own the ranking roadmap end to end».
+  Обязательно: опыт продуктовой работы с ML-системами от 3 лет; опыт A/B-тестов; SQL.
+  Будет плюсом: опыт в e-commerce.
+defects:
+  - file: defects/ml-pm-marketplace.wrong-format.md
+    must_fail: [answer_format, no_ask_recruiter, amounts_labeled]
+    note: skips the salary block, advises asking the recruiter, amount without gross or net
