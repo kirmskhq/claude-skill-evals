@@ -3,12 +3,20 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install -e ".[dev]"
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]" ruff
+      - run: ruff check .
       - run: pytest -q
       - run: skill-evals --cases examples/cases defects
       - run: skill-evals --cases examples/cases run --no-history
+      - name: Offline demo still shows the regression
+        run: |
+          bash examples/demo/release-notes/run_trend.sh
+          grep -q "Regressed since the previous run: v3-0-breaking/action_needed" examples/demo/release-notes/REPORT.md

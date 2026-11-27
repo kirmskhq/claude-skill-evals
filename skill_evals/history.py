@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 
 
-
 def default_path(cases_dir: Path) -> Path:
     """EVALS_HISTORY if set, else <cases>/results/history.jsonl next to the cases it measures."""
     return Path(os.environ.get("EVALS_HISTORY") or Path(cases_dir) / "results" / "history.jsonl")
@@ -27,8 +26,9 @@ def load(path: Path) -> list[dict]:
 
 
 def previous(runs: list[dict], run: dict) -> dict | None:
-    """The run before `run` for the same skill and mode."""
-    same = [r for r in runs if r["skill"] == run["skill"] and r["mode"] == run["mode"] and r["at"] < run["at"]]
+    """The run before `run` (in file order) for the same skill and mode."""
+    idx = next((i for i, r in enumerate(runs) if r is run), len(runs))
+    same = [r for r in runs[:idx] if r["skill"] == run["skill"] and r["mode"] == run["mode"]]
     return same[-1] if same else None
 
 
@@ -47,7 +47,7 @@ def _fmt_delta(now, before, pct=False):
     d = now - before
     if abs(d) < 1e-9:
         return " (=)"
-    return f" ({d:+.0%})" if pct else f" ({d:+.2f})"
+    return f" ({d * 100:+.0f} pts)" if pct else f" ({d:+.2f})"
 
 
 def report(runs: list[dict], last: int = 8) -> str:

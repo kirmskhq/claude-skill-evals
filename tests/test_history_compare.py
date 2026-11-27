@@ -20,7 +20,7 @@ def test_regressions_only_count_checks_that_passed_before():
 
 def test_report_shows_trend_and_latest_failures():
     text = history.report([run("2026-01-01T00:00:00Z", {"x": True}, 4.0), run("2026-01-02T00:00:00Z", {"x": False}, 3.0)])
-    assert "## s" in text and "(-100%)" in text and "(-1.00)" in text
+    assert "## s" in text and "(-100 pts)" in text and "(-1.00)" in text
     assert "Regressed since the previous run: c/x" in text and "scored 3" in text
 
 

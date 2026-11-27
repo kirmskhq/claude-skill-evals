@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from itertools import pairwise
 
 WORD_RE = re.compile(r"[\w’'-]+", re.UNICODE)
 CYRILLIC_RE = re.compile(r"[а-яё]", re.IGNORECASE)
@@ -60,7 +61,7 @@ def min_words(text, *, limit: int, id="min_words"):
 
 
 @check("paragraphs")
-def paragraph_count(text, *, min: int = 1, max: int = 99, id="paragraphs"):  # noqa: A002
+def paragraph_count(text, *, min: int = 1, max: int = 99, id="paragraphs"):
     n = len(paragraphs(text))
     return CheckResult(id, min <= n <= max, f"{n} paragraphs, allowed {min}-{max}")
 
@@ -128,7 +129,7 @@ def max_sentence_words(text, *, limit: int, id="max_sentence_words"):
 def paragraph_starts_differ(text, *, id="paragraph_starts_differ"):
     """Neighbouring paragraphs must not open with the same word."""
     firsts = [(words(p) or [""])[0].lower() for p in paragraphs(text)]
-    same = [f"{i + 1}-{i + 2} '{a}'" for i, (a, b) in enumerate(zip(firsts, firsts[1:])) if a and a == b]
+    same = [f"{i + 1}-{i + 2} '{a}'" for i, (a, b) in enumerate(pairwise(firsts)) if a and a == b]
     return CheckResult(id, not same, "same opening word in paragraphs " + ", ".join(same) if same else "ok")
 
 

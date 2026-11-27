@@ -69,7 +69,7 @@ def extract_json(text: str):
 
 def _http_post(url: str, payload: dict, headers: dict, timeout: float) -> dict:
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 (URL comes from settings)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read())
 
 

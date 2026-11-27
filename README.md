@@ -1,61 +1,85 @@
-[![tests](https://github.com/kirmskhq/claude-skill-evals/actions/workflows/tests.yml/badge.svg)](https://github.com/kirmskhq/claude-skill-evals/actions/workflows/tests.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 # skill-evals
+
+[![tests](https://github.com/kirmskhq/claude-skill-evals/actions/workflows/tests.yml/badge.svg)](https://github.com/kirmskhq/claude-skill-evals/actions/workflows/tests.yml)
+![python](https://img.shields.io/badge/python-3.11%2B-blue)
+![models](https://img.shields.io/badge/models-Claude%20%7C%20any%20OpenAI--compatible-6f42c1)
+[![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **skill-evals tells you whether an edit to your AI skill made its answers better or worse.**
 
 A skill is a written instruction for a model: a Claude `SKILL.md`, a custom GPT's instructions, a system prompt.
-You keep changing it, and every change can quietly break something that used to work. skill-evals runs your skill on
-a few saved example requests, checks every answer against your own rules, and keeps a history, so a regression shows
-up the day you make it, not weeks later in a bad answer.
+People keep editing them, and any edit can quietly break a rule that used to hold. skill-evals runs the skill on a
+few saved example requests, checks each answer against your rules, and keeps a history. A regression then shows up
+on the day you make it, before a real user sees a bad answer.
 
-It works with Claude by default and with any other model through an OpenAI-compatible API or any command-line tool.
+```console
+$ skill-evals compare release-notes v2/SKILL.md v3/SKILL.md
+release-notes: WORSE
+  checks  before 15/15  after 14/15
+  BROKEN  v3-0-breaking/action_needed
+```
+
+*The v3 edit looked like a harmless tidy-up. It removed the rule that tells users what to do after a breaking
+change. [Try this demo yourself](examples/demo/release-notes/), no API key needed.*
+
+## Why
+
+- **Prompts regress silently.** Shortening one rule can break another, and nobody rereads twenty old answers after
+  every edit.
+- **"It looks better" is not a measurement.** You need the same inputs, the same rules and a number you can compare
+  from one version to the next.
+- **Most rules are checkable by code.** Word limits, banned phrases, required sections and a closing line don't need
+  a model to grade them. Code checks them for free, the same way every time. A judge model handles the rest.
 
 ## What you get
 
-- **Rule checks in plain YAML.** Word limits, banned phrases, required sections in order, a fixed closing line,
-  answer language, sentence length, leftover placeholders. They run in milliseconds and cost nothing.
-- **An LLM judge for the rest.** Rules that need judgement ("the opening gives a reason to invite the candidate")
-  go into a rubric. A second model scores each item from 1 to 5 and quotes the words behind a low score. The judge
-  must be a different model from the one that runs the skill.
-- **Before and after in one command.** `skill-evals compare my-skill old/SKILL.md new/SKILL.md` runs both versions
-  on the same cases and prints `BETTER`, `WORSE`, `MIXED` or `SAME`, with every check that got fixed or broken.
-- **History and a trend report.** Every run is a line in `history.jsonl`; `skill-evals report` turns it into a
-  markdown table per skill, with changes against the previous run and the latest failures.
-- **Checks that prove themselves.** Each case can store broken answers and name the checks that must catch them.
-  If a check stops catching its defect, the suite fails. A check nobody tested is a check you cannot trust.
-- **A draft from your skill.** `skill-evals init my-skill --skill-file SKILL.md --draft` asks a model to turn the
-  testable rules in your skill into checks and the rest into a rubric. You review it before trusting it.
-- **Guard rails.** A hard cap on model calls and tokens for every command, skill answers passed to the judge as
-  untrusted data, and a gitignored `_private/` folder for checks you do not want to publish.
+| | |
+|---|---|
+| **Rule checks in YAML** | 12 types: word, paragraph and sentence limits, banned and required phrases, sections in order, first line, language, leftover placeholders. |
+| **An LLM judge** | Rubric items scored 1 to 5, with a quote behind every low score. The judge must be a different model from the one that runs the skill. |
+| **Before and after** | `compare` runs two versions of a skill on the same cases and prints `BETTER`, `WORSE`, `MIXED` or `SAME`, with each check that was fixed or broken. |
+| **History and trend** | Every run is one line in `history.jsonl`. `report` writes a markdown table per skill. `--fail-on-regression` makes CI fail. |
+| **Checks that prove themselves** | Each case can save broken answers and name the checks that must catch them. If a check stops catching its defect, the suite fails. |
+| **A first draft from your skill** | `init --draft` asks a model to turn the testable rules in `SKILL.md` into checks and a rubric, for you to review. |
+| **Any model** | Claude by default (Anthropic API). Also OpenAI, Groq, OpenRouter, Ollama, vLLM, or any CLI agent through `--mode command`. |
+| **Guard rails** | A hard cap on model calls and tokens per command. Answers reach the judge marked as untrusted data. Private rules live in a gitignored folder. |
 
 ## Quick start
 
 ```bash
-pip install -e ".[dev]"
-pytest -q                                              # 41 offline tests, no API key
-skill-evals --cases examples/cases list                # 5 example skills, 7 cases
-skill-evals --cases examples/cases defects             # every saved broken answer is caught
-skill-evals --cases examples/cases run                 # replay recorded answers through the checks
-skill-evals --cases examples/cases report              # writes examples/cases/results/REPORT.md
+pip install git+https://github.com/kirmskhq/claude-skill-evals
+# or, from a clone: pip install -e ".[dev]"
 ```
 
-A live run of the bundled public skill, on Claude:
+Everything below runs offline on the bundled examples:
 
 ```bash
-cp .env.example .env && set -a && . ./.env && set +a  # add LLM_API_KEY
-skill-evals --cases examples/cases run --skill release-notes --mode api --judge --label "baseline"
+skill-evals --cases examples/cases list        # 5 skills, 7 cases
+skill-evals --cases examples/cases defects     # every saved broken answer is caught
+skill-evals --cases examples/cases run         # recorded answers through all checks
+bash examples/demo/release-notes/run_trend.sh  # three versions of one skill, as a trend report
 ```
 
-## Your own skill in five minutes
+The trend report from that last command ([full report](examples/demo/release-notes/REPORT.md)):
+
+| Label | Skill version | Checks passed |
+|---|---|---|
+| v1 first draft | b37d2a96 | 11/15 = 73% |
+| v2 rules for the reader | e892399c | 15/15 = 100% (+27 pts) |
+| v3 tidy-up | ca887adf | 14/15 = 93% (-7 pts) |
+
+> Regressed since the previous run: v3-0-breaking/action_needed
+
+## Use it on your own skill
 
 ```bash
-skill-evals init my-skill --skill-file ~/.claude/skills/my-skill/SKILL.md     # add --draft for model-drafted checks
-# 1. Put a real request into evals/my-skill/example.yaml (add more cases as files next to it)
-# 2. Edit the checks in evals/my-skill/skill.yaml
-skill-evals run --mode api --judge --label "before my edit"
-# edit SKILL.md, then:
-skill-evals run --mode api --judge --label "shorter intro rule" --fail-on-regression
+skill-evals init my-skill --skill-file ~/.claude/skills/my-skill/SKILL.md   # --draft: let a model propose checks
+#   write 3-10 real requests as cases in evals/my-skill/*.yaml, then edit the checks in evals/my-skill/skill.yaml
+cp .env.example .env   # add LLM_API_KEY; export the variables in your shell
+skill-evals run --mode api --judge --label "baseline"
+#   edit SKILL.md, then
+skill-evals compare my-skill old/SKILL.md ~/.claude/skills/my-skill/SKILL.md --judge
+skill-evals run --mode api --judge --label "shorter intro" --fail-on-regression
 skill-evals report
 ```
 
@@ -67,67 +91,75 @@ input: |
   Write release notes for these merged PRs:
   - feat: export reports to CSV (#412)
   - chore: bump eslint to v9 (#416)
-checks:                       # added to the checks shared in skill.yaml
+checks:
   - id: no_internal_changes
     type: forbidden
     patterns: ['bump', 'dependenc']
-defects:                      # broken answers that these checks must catch
+defects:
   - file: defects/v2-4.leaks.md
     must_fail: [no_internal_changes]
 ```
 
-Check types: `max_words`, `min_words`, `paragraphs`, `forbidden`, `required`, `sections_in_order`,
-`first_line_not`, `no_placeholders`, `max_sentence_words`, `paragraph_starts_differ`, `language`,
-`amounts_labeled`. Adding one is a ten-line function in [`skill_evals/checks.py`](skill_evals/checks.py).
+The full format, every check type and how to add your own are in [docs/writing-evals.md](docs/writing-evals.md).
 
-## Three ways to get an answer
+## Models and modes
 
-| Mode | What runs | Use it for |
+| Mode | Where answers come from | Good for |
 |---|---|---|
-| `replay` | recorded answers in `answers/` | CI, checking your checks, offline demos |
-| `api` | `SKILL.md` as the system prompt, the case as the user message | quick runs on Claude or any OpenAI-compatible model |
-| `command` | any CLI you set in `SKILL_COMMAND`, with the case on stdin | agents with tools and reference files, other harnesses |
+| `replay` | recorded answers | CI, checking your checks, demos |
+| `api` | `SKILL.md` as the system prompt, the case as the user message | quick runs on any model |
+| `command` | any CLI in `SKILL_COMMAND`, with the case on stdin | agents that use tools and reference files |
 
-Models and providers are set in `.env`: `LLM_PROVIDER=anthropic` (default) or `openai` for OpenAI, OpenRouter,
-LiteLLM, Ollama or vLLM via `LLM_BASE_URL`. `MODEL_SKILL` runs the skill and `MODEL_JUDGE` grades it.
+```bash
+LLM_PROVIDER=anthropic   # default; MODEL_SKILL and MODEL_JUDGE default to Claude Sonnet and Opus
+LLM_PROVIDER=openai LLM_BASE_URL=https://api.groq.com/openai/v1 MODEL_SKILL=... MODEL_JUDGE=...
+```
 
-`api` mode sends only `SKILL.md`. A skill that relies on its reference files or on tools gives a fuller answer in
-`command` mode, for example through a headless agent CLI (guess: `SKILL_COMMAND="claude -p"` with the skill
-installed; not tested in this version).
+`api` mode sends only `SKILL.md`. A skill that depends on its reference files or tools gives a fuller answer in
+`command` mode, through any agent CLI that reads a prompt on stdin.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[case.yaml<br/>saved request] --> B{get answer}
+    B -->|replay| C[recorded answer]
+    B -->|api| D[model + SKILL.md]
+    B -->|command| E[any CLI agent]
+    C & D & E --> F[rule checks<br/>code, free, repeatable]
+    F --> G[judge<br/>another model, rubric 1-5]
+    G --> H[(history.jsonl)]
+    H --> I[report.md]
+    H --> J[compare: BETTER / WORSE]
+```
+
+- Standard library plus `pyyaml`. No provider SDK, no async, about 900 lines of code.
+- 44 offline tests, lint and the defect suite run in CI on every push.
+- Design decisions and the guesses still to check: [ADR 0001](docs/adr/0001-design.md).
 
 ## Examples
 
-[`examples/cases/`](examples/cases/) holds five skills:
+- [`examples/skills/release-notes`](examples/skills/release-notes/SKILL.md): a small public skill, with cases in
+  [`examples/cases/release-notes`](examples/cases/release-notes/) and the [three-version demo](examples/demo/release-notes/).
+- `cover-letter-ru`, `vacancy-evaluation-ru`, `role-profile-ru`, `cv-writing-en`: evals for the author's own
+  job-search skills, in Russian and English. Each check quotes the rule it comes from. The skills themselves stay
+  private, and the vacancies, companies and answers are invented.
 
-- **release-notes**, a small public skill that ships in [`examples/skills/`](examples/skills/release-notes/SKILL.md),
-  so anyone can run a live eval end to end.
-- **cover-letter-ru, vacancy-evaluation-ru, role-profile-ru, cv-writing-en**, the author's own job-search skills.
-  Each check quotes the rule it comes from. The skills themselves stay private; the vacancies, companies and
-  answers in the cases are invented, and checks that would reveal personal data live in `_private/`.
+## Status and roadmap
 
-[`examples/cases/results/REPORT.md`](examples/cases/results/REPORT.md) is the report from the first run, on the
-recorded answers.
+Version 0.1. The checks, history, report, `compare` and `init` are covered by tests. Both model adapters are tested
+against a fake network. No live run is published yet, and the answers in the examples are hand-written illustrations.
 
-## How it is built
+Next:
 
-```
-case YAML ──► get answer (replay | api | command) ──► rule checks ──► judge (optional, another model)
-                                                                          │
-                          history.jsonl ◄──── one line per run ◄──────────┘ ──► report.md / compare
-```
+- [ ] Several samples per case, with the spread in the report, to catch skills that only work some of the time.
+- [ ] A pairwise judge for `compare` ("which answer follows the skill better?"), which is steadier than two separate scores.
+- [ ] A GitHub Action that comments the `compare` result on any pull request that changes a `SKILL.md`.
+- [ ] Published live runs on Claude and on an open model.
 
-Standard library plus `pyyaml`; no provider SDK. Design decisions and guesses to revisit are in
-[ADR 0001](docs/adr/0001-design.md). The ideas of a judge on a different model, defect cases that prove each check
-and a hard budget come from the author's earlier
-[llm-evals-harness](https://github.com/kirmskhq/llm-evals-harness-wip).
+## Contributing
 
-## Status
+See [CONTRIBUTING.md](CONTRIBUTING.md). The ideas of a judge on a different model, defect cases and a hard budget
+come from the author's earlier [llm-evals-harness](https://github.com/kirmskhq/llm-evals-harness-wip).
 
-First version, 26 November 2026. The checks, history, report, `compare` and `init` are covered by offline tests.
-Live runs through both adapters are tested against a fake network only; the first real run is still to come.
-
-## Next
-
-- Run several samples per case and report the spread, since one answer per case hides flaky behaviour.
-- A pairwise judge for `compare` ("which answer follows the skill better?"), which is steadier than two 1-5 scores.
-- A GitHub Action that comments the `compare` result on a pull request that changes a `SKILL.md`.
+MIT License.

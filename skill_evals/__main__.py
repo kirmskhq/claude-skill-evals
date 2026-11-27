@@ -61,6 +61,8 @@ def main(argv=None) -> int:
     r = sub.add_parser("run", help="run cases and append the result to the history")
     run_opts(r)
     r.add_argument("--label", default="", help="short note for the report, e.g. 'shorter intro rule'")
+    r.add_argument("--skill-file", type=Path, help="use this SKILL.md instead of the one found for the skill")
+    r.add_argument("--answers", type=Path, help="replay answers from <dir>/<case>.md (one skill only)")
     r.add_argument("--save-answers", type=Path, help="write each answer to this folder for review")
     r.add_argument("--fail-on-regression", action="store_true", help="exit 1 if a check that passed before fails now")
     r.add_argument("--no-history", action="store_true")
@@ -70,7 +72,9 @@ def main(argv=None) -> int:
     c.add_argument("before", type=Path, help="old SKILL.md")
     c.add_argument("after", type=Path, help="new SKILL.md")
     c.add_argument("--judge", action="store_true")
-    c.add_argument("--mode", choices=["api", "command"], default="api")
+    c.add_argument("--mode", choices=["api", "command", "replay"], default="api")
+    c.add_argument("--answers-before", type=Path, help="replay mode: recorded answers of the old version")
+    c.add_argument("--answers-after", type=Path, help="replay mode: recorded answers of the new version")
     c.add_argument("--max-calls", type=int, default=50)
     c.add_argument("--max-tokens", type=int, default=400_000)
 
@@ -122,9 +126,15 @@ def main(argv=None) -> int:
     jl = llm if args.judge else None
 
     if args.cmd == "compare":
-        before = run_skill(args.skill, gen, cases_dir=cases_dir, judge_llm=jl, judge_model=judge_model, budget=budget,
+        gen_before = gen_after = gen
+        if args.mode == "replay":
+            if not (args.answers_before and args.answers_after):
+                ap.error("compare --mode replay needs --answers-before and --answers-after")
+            gen_before = Generator("replay", answers_dir=args.answers_before)
+            gen_after = Generator("replay", answers_dir=args.answers_after)
+        before = run_skill(args.skill, gen_before, cases_dir=cases_dir, judge_llm=jl, judge_model=judge_model, budget=budget,
                            skill_path=args.before, label="compare: before", history_path=False)
-        after = run_skill(args.skill, gen, cases_dir=cases_dir, judge_llm=jl, judge_model=judge_model, budget=budget,
+        after = run_skill(args.skill, gen_after, cases_dir=cases_dir, judge_llm=jl, judge_model=judge_model, budget=budget,
                           skill_path=args.after, label="compare: after", history_path=False)
         print(render(args.skill, before, after))
         print(f"model calls {budget.calls}, tokens {budget.tokens}")
@@ -132,13 +142,20 @@ def main(argv=None) -> int:
 
     hist = history.default_path(cases_dir)
     runs_before = history.load(hist)
+    targets = args.skill or skills(cases_dir)
+    if (args.skill_file or args.answers) and len(targets) != 1:
+        ap.error("--skill-file and --answers need exactly one --skill")
+    if args.answers:
+        if args.mode != "replay":
+            ap.error("--answers works with --mode replay")
+        gen.answers_dir = args.answers
     code = 0
-    for skill in args.skill or skills(cases_dir):
-        if args.mode != "replay" and not find_skill_file(skill, cases_dir):
+    for skill in targets:
+        if args.mode != "replay" and not (args.skill_file or find_skill_file(skill, cases_dir)):
             print(f"{skill}: skipped, SKILL.md not found (set SKILLS_DIR or skill_file in skill.yaml)")
             continue
         run = run_skill(skill, gen, cases_dir=cases_dir, judge_llm=jl, judge_model=judge_model, budget=budget,
-                        label=args.label, history_path=False if args.no_history else hist,
+                        skill_path=args.skill_file, label=args.label, history_path=False if args.no_history else hist,
                         save_answers=args.save_answers)
         judge = f", judge {run['judge_avg']:.2f}" if run["judge_avg"] is not None else ""
         print(f"{skill}: {run['checks_passed']}/{run['checks_total']} checks{judge}")

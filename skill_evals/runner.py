@@ -47,10 +47,16 @@ class Generator:
     llm: LLM | None = None
     model: str = ""
     command: str = ""
+    answers_dir: Path | None = None  # replay answers from <answers_dir>/<case>.md instead of the case's answers/
 
     def answer(self, case: Case, skill_path: Path | None, budget: Budget) -> str:
         task = f"{self.mode}:{case.skill}/{case.id}"
         if self.mode == "replay":
+            if self.answers_dir:
+                path = Path(self.answers_dir) / f"{case.id}.md"
+                if not path.exists():
+                    raise FileNotFoundError(f"no recorded answer {path}")
+                return path.read_text(encoding="utf-8")
             return case.recorded_answer()
         if self.mode == "api":
             if not skill_path:
