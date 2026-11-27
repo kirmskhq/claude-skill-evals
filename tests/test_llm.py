@@ -50,3 +50,26 @@ def test_untrusted_wrapper_neutralises_fake_end_marker():
 
 def test_extract_json_from_fenced_block():
     assert extract_json('Sure:\n```json\n{"a": 1}\n```') == {"a": 1}
+
+
+def test_rate_limit_waits_as_long_as_retry_after_says(monkeypatch):
+    import email.message
+    import io
+    import urllib.error
+
+    slept = []
+    monkeypatch.setattr("skill_evals.llm.time.sleep", slept.append)
+    headers = email.message.Message()
+    headers["Retry-After"] = "14"
+    ok = FakePost("done", provider="openai")
+    calls = {"n": 0}
+
+    def post(url, payload, hdrs, timeout):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise urllib.error.HTTPError(url, 429, "Too Many Requests", headers, io.BytesIO(b"{}"))
+        return ok(url, payload, hdrs, timeout)
+
+    llm = LLM("k", "openai", "http://x/v1", post=post)
+    assert llm.chat([{"role": "user", "content": "U"}], model="m", budget=Budget(), task="t") == "done"
+    assert slept == [14.0]

@@ -48,3 +48,21 @@ def test_command_mode_runs_any_cli(examples):
 def test_save_answers(examples, tmp_path):
     run_skill("release-notes", Generator("replay"), cases_dir=examples, history_path=False, save_answers=tmp_path)
     assert (tmp_path / "release-notes" / "v2-4.md").exists()
+
+
+def test_judge_asks_once_more_when_its_json_is_broken(examples):
+    case = next(c for c in load_skill("release-notes", examples) if c.rubric)
+    good = json.dumps({"scores": [{"id": r["id"], "score": 4, "reason": "ok"} for r in case.rubric]})
+    post = FakePost('{"scores": [{"id": "a", "reason": "says "hi" here"}]}', good)
+    b = Budget()
+    scores = judge(case, "notes", llm=LLM("k", post=post), model="judge", budget=b)
+    assert [s["score"] for s in scores] == [4] * len(case.rubric) and b.calls == 2
+    assert "not valid JSON" in post.requests[1]["payload"]["messages"][-1]["content"]
+
+
+def test_judge_scoring_one_item_twice_keeps_the_lower_score(examples):
+    case = load_skill("release-notes", examples)[0]
+    answer = json.dumps({"scores": [{"id": "user_effect", "score": 5}, {"id": "complete", "score": 2},
+                                    {"id": "complete", "score": 5}]})
+    scores = judge(case, "notes", llm=LLM("k", post=FakePost(answer)), model="judge", budget=Budget())
+    assert sorted((s["id"], s["score"]) for s in scores) == [("complete", 2), ("user_effect", 5)]

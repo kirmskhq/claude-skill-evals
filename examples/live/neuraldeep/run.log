@@ -1,0 +1,28 @@
+== v1 first draft
+release-notes: 14/15 checks, judge 3.00
+  FAIL v2-4/no_internal_changes: found: refactor
+model calls 4, tokens 1833
+== v2 rules for the reader
+release-notes: 15/15 checks, judge 3.50
+model calls 4, tokens 2058
+== v3 tidy-up
+  File "/home/user/claude-skill-evals/skill_evals/runner.py", line 100, in run_skill
+    scores = judge(case, answer, llm=judge_llm, model=judge_model, budget=budget) if judge_llm else []
+             ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/claude-skill-evals/skill_evals/judge.py", line 34, in judge
+    raw = llm.chat(messages, model=model, budget=budget, task=task, max_tokens=1500)
+  File "/home/user/claude-skill-evals/skill_evals/llm.py", line 145, in chat
+    raise LLMError(f"model unavailable after {attempt + 1} attempts: {last}") from e
+skill_evals.llm.LLMError: model unavailable after 3 attempts: HTTP Error 429: Too Many Requests
+             ~~~~^^
+  File "/home/user/claude-skill-evals/skill_evals/__main__.py", line 135, in main
+    before = run_skill(args.skill, gen_before, cases_dir=cases_dir, judge_llm=jl, judge_model=judge_model, budget=budget,
+                       skill_path=args.before, label="compare: before", history_path=False)
+  File "/home/user/claude-skill-evals/skill_evals/runner.py", line 93, in run_skill
+    answer = gen.answer(case, skill_path, budget)
+  File "/home/user/claude-skill-evals/skill_evals/runner.py", line 66, in answer
+    return self.llm.chat(messages, model=self.model, budget=budget, task=task, max_tokens=4000, temperature=0.2)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/claude-skill-evals/skill_evals/llm.py", line 145, in chat
+    raise LLMError(f"model unavailable after {attempt + 1} attempts: {last}") from e
+skill_evals.llm.LLMError: model unavailable after 3 attempts: HTTP Error 429: Too Many Requests

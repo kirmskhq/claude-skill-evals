@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .cases import Case
-from .llm import LLM, Budget, extract_json, wrap_untrusted
+from .llm import LLM, Budget, LLMError, extract_json, wrap_untrusted
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "judge.md"
 
@@ -29,16 +29,31 @@ def judge(case: Case, answer: str, *, llm: LLM, model: str, budget: Budget) -> l
         f"Task the assistant received:\n{wrap_untrusted(case.input, 'case-input')}\n\n"
         f"Answer to grade:\n{wrap_untrusted(answer, 'skill-answer')}"
     )
-    raw = llm.chat([{"role": "system", "content": system}, {"role": "user", "content": user}],
-                   model=model, budget=budget, task=f"judge:{case.skill}/{case.id}", max_tokens=1500)
-    data = extract_json(raw)
+    messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    task = f"judge:{case.skill}/{case.id}"
+    raw = llm.chat(messages, model=model, budget=budget, task=task, max_tokens=1500)
+    try:
+        data = extract_json(raw)
+    except ValueError as e:
+        # open models often break JSON with an unescaped quote; ask once more, then give up loudly
+        messages += [{"role": "assistant", "content": raw},
+                     {"role": "user", "content": f"Your reply was not valid JSON ({e}). Send the same scores as "
+                                                 "valid JSON only, with single quotes inside the reasons."}]
+        raw = llm.chat(messages, model=model, budget=budget, task=task + ":retry", max_tokens=1500)
+        try:
+            data = extract_json(raw)
+        except ValueError as e2:
+            raise LLMError(f"judge reply for {case.skill}/{case.id} is not valid JSON twice: {e2}") from e2
     known = {r["id"] for r in case.rubric}
-    scores = []
+    best: dict[str, dict] = {}
     for s in data.get("scores", []):
         if s.get("id") in known:
             score = max(1, min(5, int(s.get("score", 1))))
-            scores.append({"id": s["id"], "score": score, "reason": str(s.get("reason", ""))[:400]})
-    missing = known - {s["id"] for s in scores}
+            # a judge that scores one item twice must not count it twice; the lower score stands
+            if s["id"] not in best or score < best[s["id"]]["score"]:
+                best[s["id"]] = {"id": s["id"], "score": score, "reason": str(s.get("reason", ""))[:400]}
+    scores = list(best.values())
+    missing = known - set(best)
     # an item the judge skipped counts as a fail, so a lazy judge cannot raise the average
     scores += [{"id": m, "score": 1, "reason": "judge did not score this item"} for m in sorted(missing)]
     return scores

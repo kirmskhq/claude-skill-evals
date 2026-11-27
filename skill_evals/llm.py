@@ -73,6 +73,16 @@ def _http_post(url: str, payload: dict, headers: dict, timeout: float) -> dict:
         return json.loads(r.read())
 
 
+def _retry_delay(error: Exception, attempt: int) -> float:
+    """Seconds to wait before a retry: the server's Retry-After (free tiers send it on 429), capped at 90 s."""
+    headers = getattr(error, "headers", None)
+    value = headers.get("Retry-After") if headers is not None else None
+    try:
+        return min(float(value), 90.0) if value else float(2 ** attempt)
+    except ValueError:
+        return float(2 ** attempt)
+
+
 DEFAULT_URLS = {"anthropic": "https://api.anthropic.com/v1", "openai": "https://api.openai.com/v1"}
 
 
@@ -133,7 +143,7 @@ class LLM:
                 last = str(e)
                 if attempt == self.retries:
                     raise LLMError(f"model unavailable after {attempt + 1} attempts: {last}") from e
-                time.sleep(2 ** attempt)
+                time.sleep(_retry_delay(e, attempt))
         text, tokens = self._parse(data)
         tokens = tokens or (sum(len(m["content"]) for m in messages) + len(text)) // 3
         budget.after(task, model, tokens)
